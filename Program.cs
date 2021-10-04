@@ -76,6 +76,10 @@ namespace MergeDateLists
 			children = CreateSamples.CreateSampleChildren5();
 
 			mergedList = MergeItems(parents, children);
+			
+			CreateSamples.CompareResults5(mergedList.ToList());
+			
+			#endregion
 		}
 
 		private static IEnumerable<Item> MergeItems(IEnumerable<Item> parents, IEnumerable<Item> children)
@@ -92,7 +96,7 @@ namespace MergeDateLists
 			return DoMagic(mergedList.ToList(), parentsList);
 		}
 		
-		private static List<Item> DoMagic(List<Item> mergedList, List<Item> parentsList)
+		private static IEnumerable<Item> DoMagic(List<Item> mergedList, List<Item> parentsList)
 		{
 			for (int i = 0; i < mergedList.Count; i++)
 			{
@@ -131,32 +135,29 @@ namespace MergeDateLists
 		/// <summary>
 		/// Checks if the End needs to be reassigned and will do if so.
 		/// </summary>
-		/// <param name="mergedList"></param>
+		/// <param name="merged"></param>
 		/// <param name="i"></param>
 		/// <returns>Whether the changed Item is still valid</returns>
-		private static bool ReassignEnd(List<Item> mergedList, int i)
+		private static bool ReassignEnd(List<Item> merged, int i)
 		{
 			// check if End is valid
-			if (i < mergedList.Count - 1)
+			if (i < merged.Count - 1 && merged[i].End.Value >= merged[i + 1].Begin)
 			{
-				if (mergedList[i].End.Value >= mergedList[i + 1].Begin)
+				if (merged[i].End.Value > merged[i + 1].End)
 				{
-					if (mergedList[i].End.Value > mergedList[i + 1].End)
+					var newParent = new Item
 					{
-						var newParent = new Item
-						{
-							Begin = mergedList[i + 1].End.Value.AddDays(1),
-							End = mergedList[i].End,
-							Id = mergedList[i].Id
-						};
-						if (CheckIfElementIsValid(newParent))
-						{
-							mergedList.Insert(i + 2, newParent);
-						}
+						Begin = merged[i + 1].End.Value.AddDays(1),
+						End = merged[i].End,
+						Id = merged[i].Id
+					};
+					if (CheckIfElementIsValid(newParent))
+					{
+						merged.Insert(i + 2, newParent);
 					}
-					mergedList[i].End = mergedList[i + 1].Begin.AddDays(-1);
-					return CheckIfElementIsValid(mergedList[i]);
 				}
+				merged[i].End = merged[i + 1].Begin.AddDays(-1);
+				return CheckIfElementIsValid(merged[i]);
 			}
 
 			return true;
@@ -170,13 +171,10 @@ namespace MergeDateLists
 		/// <returns>Whether the changed Item is still valid</returns>
 		private static bool ReassignBegin(List<Item> mergedList, int i)
 		{
-			if (i > 0)
+			if (i > 0 && mergedList[i].Begin <= mergedList[i - 1].End!.Value)
 			{
-				if (mergedList[i].Begin <= mergedList[i - 1].End!.Value)
-				{
-					mergedList[i].Begin = mergedList[i - 1].End!.Value.AddDays(1);
-					return CheckIfElementIsValid(mergedList[i]);
-				}
+				mergedList[i].Begin = mergedList[i - 1].End!.Value.AddDays(1);
+				return CheckIfElementIsValid(mergedList[i]);
 			}
 
 			return true;
@@ -189,54 +187,40 @@ namespace MergeDateLists
 		/// <returns>True when Element is valid</returns>
 		private static bool CheckIfElementIsValid(Item item)
 		{
-			if (item.Begin <= item.End)
-			{
-				return true;
-			}
-
-			return false;
+			return item.Begin <= item.End;
 		}
 
-		private static void HandleElemtWithoutEnd(List<Item> mergedList, int i, bool isChild)
+		private static void HandleElemtWithoutEnd(List<Item> merged, int i, bool isChild)
 		{
-			if (i == mergedList.Count - 1)
+			if (i == merged.Count - 1)
 			{
 				return;
 			}
 			// If it is a child all Elements after it can be removed
 			if (isChild)
 			{
-				mergedList.RemoveRange(i + 1, mergedList.Count - (i + 1));
+				merged.RemoveRange(i + 1, merged.Count - (i + 1));
 				return;
 			}
 			// If the last element has no End value -> add End to parent
-			if (!mergedList[^1].End.HasValue)
+			if (!merged[^1].End.HasValue)
 			{
-				mergedList[i].End = mergedList[^1].Begin.AddDays(-1);
+				merged[i].End = merged[^1].Begin.AddDays(-1);
 				return;
 			}
 
-			mergedList.Add(new Item
+			merged.Add(new Item
 			{
-				Begin = mergedList[^1].End.Value.AddDays(1),
-				Id = mergedList[i].Id
+				Begin = merged[^1].End.Value.AddDays(1),
+				Id = merged[i].Id
 			});
-			mergedList[i].End = mergedList[^1].Begin.AddDays(-1);
+			merged[i].End = merged[^1].Begin.AddDays(-1);
 		}
 
-		private static IEnumerable<Item> UniteLists(List<Item> parentsList, List<Item> childrenList)
+		private static IEnumerable<Item> UniteLists(List<Item> parentItems, List<Item> childItems)
 		{
-			var pList = new List<Item>();
-			foreach (var p in parentsList)
-			{
-				pList.Add(new Item
-				{
-					Begin = p.Begin,
-					End = p.End,
-					Id = p.Id
-				});
-			}
-			var mergedList = childrenList.Union(pList);
+			var pList = parentItems.Select(p => new Item { Begin = p.Begin, End = p.End, Id = p.Id }).ToList();
+			var mergedList = childItems.Concat(pList);
 			// Processes the list for indexing through it easier (Sorts by date and child before parent)
 			return mergedList.OrderBy(x => x.Begin).ThenBy(x => pList.IndexOf(x));
 		}
