@@ -33,7 +33,7 @@ namespace MergeDateLists
 					};
 				}
 				
-		public static IEnumerable<Item> CreateSampleChilds0()
+		public static IEnumerable<Item> CreateSampleChildren0()
 				{
 					return new List<Item>
 					{
@@ -159,7 +159,7 @@ namespace MergeDateLists
 			};
 		}
 		
-		public static IEnumerable<Item> CreateSampleChilds1()
+		public static IEnumerable<Item> CreateSampleChildren1()
 		{
 			return new List<Item>
 			{
@@ -346,7 +346,7 @@ namespace MergeDateLists
 			};
 		}
 				
-		public static IEnumerable<Item> CreateSampleChilds2()
+		public static IEnumerable<Item> CreateSampleChildren2()
 		{
 			return new List<Item>
 			{
@@ -450,7 +450,7 @@ namespace MergeDateLists
 			};
 		}
 				
-		public static IEnumerable<Item> CreateSampleChilds3()
+		public static IEnumerable<Item> CreateSampleChildren3()
 		{
 			return new List<Item>
 			{
@@ -499,7 +499,7 @@ namespace MergeDateLists
 			};
 		}
 				
-		public static IEnumerable<Item> CreateSampleChilds4()
+		public static IEnumerable<Item> CreateSampleChildren4()
 		{
 			return new List<Item>
 			{
@@ -574,7 +574,7 @@ namespace MergeDateLists
 			};
 		}
 				
-		public static IEnumerable<Item> CreateSampleChilds5()
+		public static IEnumerable<Item> CreateSampleChildren5()
 		{
 			return new List<Item>();
 		}

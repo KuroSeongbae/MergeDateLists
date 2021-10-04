@@ -18,9 +18,9 @@ namespace MergeDateLists
 			#region Test0
 
 			var parents = CreateSamples.CreateSampleParents0();
-			var childs = CreateSamples.CreateSampleChilds0();
+			var children = CreateSamples.CreateSampleChildren0();
 
-			var mergedList = MergeItems(parents, childs);
+			var mergedList = MergeItems(parents, children);
 			
 			CreateSamples.CompareResults0(mergedList.ToList());
 
@@ -29,9 +29,9 @@ namespace MergeDateLists
 			#region Test1
 
 			parents = CreateSamples.CreateSampleParents1();
-			childs = CreateSamples.CreateSampleChilds1();
+			children = CreateSamples.CreateSampleChildren1();
 
-			mergedList = MergeItems(parents, childs);
+			mergedList = MergeItems(parents, children);
 			
 			CreateSamples.CompareResults1(mergedList.ToList());
 
@@ -40,9 +40,9 @@ namespace MergeDateLists
 			#region Test2
 
 			parents = CreateSamples.CreateSampleParents2();
-			childs = CreateSamples.CreateSampleChilds2();
+			children = CreateSamples.CreateSampleChildren2();
 
-			mergedList = MergeItems(parents, childs);
+			mergedList = MergeItems(parents, children);
 			
 			CreateSamples.CompareResults2(mergedList.ToList());
 
@@ -51,9 +51,9 @@ namespace MergeDateLists
 			#region Test3
 
 			parents = CreateSamples.CreateSampleParents3();
-			childs = CreateSamples.CreateSampleChilds3();
+			children = CreateSamples.CreateSampleChildren3();
 
-			mergedList = MergeItems(parents, childs);
+			mergedList = MergeItems(parents, children);
 			
 			CreateSamples.CompareResults3(mergedList.ToList());
 
@@ -62,9 +62,9 @@ namespace MergeDateLists
 			#region Test4
 
 			parents = CreateSamples.CreateSampleParents4();
-			childs = CreateSamples.CreateSampleChilds4();
+			children = CreateSamples.CreateSampleChildren4();
 
-			mergedList = MergeItems(parents, childs);
+			mergedList = MergeItems(parents, children);
 			
 			CreateSamples.CompareResults4(mergedList.ToList());
 
@@ -73,26 +73,22 @@ namespace MergeDateLists
 			#region Test5
 
 			parents = CreateSamples.CreateSampleParents5();
-			childs = CreateSamples.CreateSampleChilds5();
+			children = CreateSamples.CreateSampleChildren5();
 
-			mergedList = MergeItems(parents, childs);
-			
-			CreateSamples.CompareResults5(mergedList.ToList());
-
-			#endregion
+			mergedList = MergeItems(parents, children);
 		}
 
-		private static IEnumerable<Item> MergeItems(IEnumerable<Item> parents, IEnumerable<Item> childs)
+		private static IEnumerable<Item> MergeItems(IEnumerable<Item> parents, IEnumerable<Item> children)
 		{
 			var parentsList = parents.ToList();
 			// Children contain same BillingInformation like parents if they don't have any own ones.
 			// Return parentSections if it's the case.
-			if (parentsList.Any(p => childs.Any(c => c.Id == p.Id)))
+			if (parentsList.Any(p => children.Any(c => c.Id == p.Id)))
 			{
 				return parentsList;
 			}
 			
-			var mergedList = UniteLists(parentsList, childs.ToList());
+			var mergedList = UniteLists(parentsList, children.ToList());
 			return DoMagic(mergedList.ToList(), parentsList);
 		}
 		
@@ -105,12 +101,16 @@ namespace MergeDateLists
 				
 				// Handle Element if it has no End Value
 				if (!mergedList[i].End.HasValue)
-					HandleElemtWithoutEnd(mergedList, i, isChild);
-				
-				// Skip childs
+				{
+					HandleElemtWithoutEnd(mergedList, i, isChild);	
+				}
+
+				// Skip children
 				if (isChild)
-					continue;
-				
+				{
+					continue;	
+				}
+
 				// Check if Begin value needs to be reassigned -> if so check if the element is still valid else delete it
 				if (!ReassignBegin(mergedList, i))
 				{
@@ -209,7 +209,6 @@ namespace MergeDateLists
 				mergedList.RemoveRange(i + 1, mergedList.Count - (i + 1));
 				return;
 			}
-			// All of the following Elements need to loose their reference. So we always create new Objects
 			// If the last element has no End value -> add End to parent
 			if (!mergedList[^1].End.HasValue)
 			{
@@ -225,30 +224,7 @@ namespace MergeDateLists
 			mergedList[i].End = mergedList[^1].Begin.AddDays(-1);
 		}
 
-		private static bool SkipElement(List<Item> parentsList, List<Item> mergedList, int i)
-		{
-			// check if End is valid
-			if (i < mergedList.Count - 1)
-			{
-				if (mergedList[i].End.Value >= mergedList[i + 1].Begin)
-				{
-					return false;
-				}
-			}
-
-			// check if Begin is valid
-			if (i > 0)
-			{
-				if (mergedList[i].Begin <= mergedList[i - 1].End!.Value)
-				{
-					return false;
-				}
-			}
-
-			return true;
-		}
-
-		private static IEnumerable<Item> UniteLists(List<Item> parentsList, List<Item> childsList)
+		private static IEnumerable<Item> UniteLists(List<Item> parentsList, List<Item> childrenList)
 		{
 			var pList = new List<Item>();
 			foreach (var p in parentsList)
@@ -260,7 +236,7 @@ namespace MergeDateLists
 					Id = p.Id
 				});
 			}
-			var mergedList = childsList.Union(pList);
+			var mergedList = childrenList.Union(pList);
 			// Processes the list for indexing through it easier (Sorts by date and child before parent)
 			return mergedList.OrderBy(x => x.Begin).ThenBy(x => pList.IndexOf(x));
 		}
